@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity
         implements OnSuccessListener<Text>,
         OnFailureListener {
 
+
+
     // no usado actualmente la camara
     public static int REQUEST_CAMERA = 111;
     public static int REQUEST_GALLERY = 222;
