@@ -1,6 +1,7 @@
 package com.example.visionapi;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -21,6 +22,10 @@ import android.widget.TextView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
@@ -46,6 +51,7 @@ public class MainActivity extends AppCompatActivity
     public static int REQUEST_CAMERA = 111;
     public static int REQUEST_GALLERY = 222;
 
+
     Bitmap mSelectedImage;
     ImageView mImageView;
     TextView txtResults;
@@ -61,21 +67,6 @@ public class MainActivity extends AppCompatActivity
                     String[]{Manifest.permission.CAMERA},100);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && null != data) {
-            try {
-                if (requestCode == REQUEST_CAMERA)
-                    mSelectedImage = (Bitmap) data.getExtras().get("data");
-                else
-                    mSelectedImage = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
-                mImageView.setImageBitmap(mSelectedImage);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
 
 
     public void abrirGaleria (View view){
@@ -83,11 +74,57 @@ public class MainActivity extends AppCompatActivity
                 android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(i, REQUEST_GALLERY);
     }
+    public void escanearCodigoDeBarras(View view) {
+        if (mSelectedImage != null) {
+            escanearCodigoDeBarrasDesdeImagen();
+        } else {
+            // Manejar el caso en el que no hay una imagen seleccionada
+            txtResults.setText("Seleccione una imagen antes de escanear el código de barras.");
+        }
+    }
 
-    public void abrirCamera (View view){
+    private void escanearCodigoDeBarrasDesdeImagen() {
+        InputImage image = InputImage.fromBitmap(mSelectedImage, 0);
+        BarcodeScannerOptions options =
+                new BarcodeScannerOptions.Builder()
+                        .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
+                        .build();
+        BarcodeScanner scanner = BarcodeScanning.getClient(options);
+        scanner.process(image)
+                .addOnSuccessListener(barcodes -> {
+                    StringBuilder results = new StringBuilder("Códigos de barras encontrados:\n");
+                    for (Barcode barcode : barcodes) {
+                        results.append(barcode.getDisplayValue()).append("\n");
+                    }
+                    txtResults.setText(results.toString());
+                })
+                .addOnFailureListener(e -> {
+                    // Manejar el error durante el escaneo
+                    txtResults.setText("Error al escanear el código de barras.");
+                });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && data != null) {
+            try {
+                if (requestCode == REQUEST_GALLERY) {
+                    mSelectedImage = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
+                    mImageView.setImageBitmap(mSelectedImage);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    /*  public void abrirCamera (View view){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, REQUEST_CAMERA);
-    }
+    }   */
+
 
     public void OCRfx(View v) {
         InputImage image = InputImage.fromBitmap(mSelectedImage, 0);
