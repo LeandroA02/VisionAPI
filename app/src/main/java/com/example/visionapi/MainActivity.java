@@ -48,9 +48,9 @@ public class MainActivity extends AppCompatActivity
         implements OnSuccessListener<Text>,
         OnFailureListener {
 
+    // no usado actualmente la camara
     public static int REQUEST_CAMERA = 111;
     public static int REQUEST_GALLERY = 222;
-
 
     Bitmap mSelectedImage;
     ImageView mImageView;
@@ -74,16 +74,16 @@ public class MainActivity extends AppCompatActivity
                 android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(i, REQUEST_GALLERY);
     }
-    public void escanearCodigoDeBarras(View view) {
+
+    public void escanearImagen(View view) {
         if (mSelectedImage != null) {
-            escanearCodigoDeBarrasDesdeImagen();
+            escanearCodigoBarras();
         } else {
-            // Manejar el caso en el que no hay una imagen seleccionada
-            txtResults.setText("Seleccione una imagen antes de escanear el código de barras.");
+            txtResults.setText("Debes seleccionar una imagen");
         }
     }
 
-    private void escanearCodigoDeBarrasDesdeImagen() {
+    private void escanearCodigoBarras() {
         InputImage image = InputImage.fromBitmap(mSelectedImage, 0);
         BarcodeScannerOptions options =
                 new BarcodeScannerOptions.Builder()
@@ -92,18 +92,17 @@ public class MainActivity extends AppCompatActivity
         BarcodeScanner scanner = BarcodeScanning.getClient(options);
         scanner.process(image)
                 .addOnSuccessListener(barcodes -> {
-                    StringBuilder results = new StringBuilder("Códigos de barras encontrados:\n");
+                    StringBuilder results = new StringBuilder("Código obtenido :\n");
                     for (Barcode barcode : barcodes) {
                         results.append(barcode.getDisplayValue()).append("\n");
                     }
                     txtResults.setText(results.toString());
                 })
                 .addOnFailureListener(e -> {
-                    // Manejar el error durante el escaneo
+                    // Mensaje de error
                     txtResults.setText("Error al escanear el código de barras.");
                 });
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -119,7 +118,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
+    //el boton de camara se lo esta usando para otra acción
     /*  public void abrirCamera (View view){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, REQUEST_CAMERA);
